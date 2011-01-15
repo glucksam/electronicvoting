@@ -1,8 +1,11 @@
-package ElectronicVoting.Workshop;
+package ElectronicVoting.Workshop.Tools;
 
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -14,12 +17,18 @@ public class ElectronicVoting extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	 super.onCreate(savedInstanceState);
-    	 IntentIntegrator.initiateScan(this);
+    //	 IntentIntegrator.initiateScan(this);
+    	 Server s =new Server();
+    	 try {
+			s.setUrl("http://localhost:8080/HttpServer-G");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	 
     }
     
-    /**
-     * Handling a scan resolt 
-     */
+    
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
     	 IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
     	 //if the scan secced the sFromScan will get the value
@@ -30,4 +39,5 @@ public class ElectronicVoting extends Activity {
     	  I_sFromScan=null;
     	   
     }
+
 }
