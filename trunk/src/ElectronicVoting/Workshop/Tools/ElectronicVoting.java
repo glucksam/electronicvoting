@@ -1,8 +1,8 @@
 package ElectronicVoting.Workshop.Tools;
 
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.util.List;
+//import java.io.FileOutputStream;
+//import java.io.OutputStreamWriter;
+//import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,14 +17,15 @@ public class ElectronicVoting extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	 super.onCreate(savedInstanceState);
+    	
     //	 IntentIntegrator.initiateScan(this);
-    	 Server s =new Server();
-    	 try {
-			s.setUrl("http://localhost:8080/HttpServer-G");
-		} catch (Exception e) {
+    //	 Server s =new Server();
+    //	 try {
+	//		s.setUrl("http://localhost:8080/HttpServer-G");
+	//	} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	//		e.printStackTrace();
+	//	}
     	 
     }
     
