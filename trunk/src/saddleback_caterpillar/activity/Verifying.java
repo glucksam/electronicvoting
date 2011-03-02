@@ -48,7 +48,7 @@ public class Verifying extends Activity {
 				parmters.put("text",
 						"Vote is created correctly.\nThe serial numberrs are\n");
 			} else {
-				parmters.put("is Aoudit", "yes");
+				parmters.put("isAoudit", "yes");
 				parmters.put("tiltes", "Audit resalt");
 				parmters.put("text", "The vote is.\nThe serial numberrs are\n");
 			}
