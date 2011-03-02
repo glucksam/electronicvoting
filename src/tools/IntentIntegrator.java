@@ -1,4 +1,4 @@
-package ElectronicVoting.Workshop.Tools;
+package tools;
 
 import android.app.AlertDialog;
 import android.app.Activity;

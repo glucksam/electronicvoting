@@ -1,4 +1,4 @@
-package ElectronicVoting.Workshop.Tools;
+package tools;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package ElectronicVoting.Workshop.Tools;
+package tools;
 
 /**
  * <p>Encapsulates the result of a barcode scan invoked through {@link IntentIntegrator}.</p>
