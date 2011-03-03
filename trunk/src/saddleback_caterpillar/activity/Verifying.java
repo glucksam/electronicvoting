@@ -5,6 +5,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +37,7 @@ public class Verifying extends Activity {
 
 	private ProgressBar mProgress;
 
+	/*TODO: remove when done debuging*/
 	// private String first_scan;
 	// private String second_scan;
 
@@ -37,20 +45,31 @@ public class Verifying extends Activity {
 	private String second_scan = "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
 
 	private BallotVerifier bv = null;
+	private Boolean isVerified = false;
+	private String sCandidate = "";
+	
 	private Handler mHandler = new Handler() {
 
 		@Override
 		public void handleMessage(Message msg) {
 			HashMap<String, String> parmters = new HashMap<String, String>();
+			if(!isVerified){
+				parmters.put("text",
+						"Vote was NOT created correctly :(");
+			}
 			if (0 == second_scan.compareTo("")) {
 				parmters.put("isAoudit", "no");
 				parmters.put("tiltes", "Costing");
-				parmters.put("text",
-						"Vote is created correctly.\nThe serial numberrs are\n");
+				if(!parmters.containsKey("text")){
+					parmters.put("text",
+							"Vote was created correctly.\nThe SC's counters are\n");
+				}
 			} else {
 				parmters.put("isAoudit", "yes");
 				parmters.put("tiltes", "Audit resalt");
-				parmters.put("text", "The vote is.\nThe serial numberrs are\n");
+				if(!parmters.containsKey("text")){
+					parmters.put("text", "Vote was created correctly\nThe candidate is: " + sCandidate);
+				}
 			}
 			mProgress.setVisibility(8);
 			HelpfoulMathpud.moveActivtyWitheParam(Reasult.class,
@@ -65,46 +84,45 @@ public class Verifying extends Activity {
 
 		new Thread(new Runnable() {
 			public void run() {
-				Log.d("WORKSHOP", "run 1");
 				Bundle bundle = getActivityInstanc().getIntent().getExtras();
+				/* TODO: un-comment when done testing */
 				// first_scan = bundle.getString("firstScanReasult");
 				// second_scan = bundle.getString("secondScanReasult");
-				Log.d("WORKSHOP", "run 2");
-				List<String> parmtersFromFIle = hendlFielsFromApplication(
+				List<String> parmtersFromFIle = hendleFilesFromApplication(
 						R.raw.parmtersfile, "#");
 				List<String> sigFromBB = null;
 
 				try {
-					Log.d("WORKSHOP", "run 3");
-					Log.d("WORKSHOP", parmtersFromFIle.get(0)
-							+ "/signature.txt");
 					int len = Server.getFile(parmtersFromFIle.get(0),
 							"signature.txt", getActivityInstanc()
 									.getApplicationContext());
-					Log.d("WORKSHOP", "run 3.5");
 					sigFromBB = handleFielsFromServer("signature.txt", len, "#");
-					for (String s : sigFromBB) {
-						Log.d("WORKSHOP", s + "\n");
-					}
-					Log.d("WORKSHOP", "run 4");
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
 				}
-				if (null == sigFromBB || null == parmtersFromFIle) {
-					HelpfoulMathpud.Error(getActivityInstanc());
+				if (null == sigFromBB || sigFromBB.equals("")){
+					HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
 				}
-				setBallot(createBalloVerifier(parmtersFromFIle, sigFromBB));
-				if (null == bv) {
-					HelpfoulMathpud.Error(getActivityInstanc());
+				if(parmtersFromFIle == null || parmtersFromFIle.equals("")){
+					HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
+				}
+				try {
+					setBallot(createBalloVerifier(parmtersFromFIle, sigFromBB));
+					isVerified = bv.verify();
+					if(0 != bv.getCandidate()){
+						sCandidate = parmtersFromFIle.get(5+bv.getCandidate());
+					}
+				} catch (IOException e) {
+					HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+				} catch (GeneralSecurityException e) {
+					HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
 				}
 				Log.d("WORKSHOP", bv.toString());
 				Log.d("WORKSHOP", "DONE!!!");
+				/*TODO: send error number if failed*/
 				mHandler.sendEmptyMessage(0);
 			}
-
 		}).start();
-
 	}
 
 	private Activity getActivityInstanc() {
@@ -115,12 +133,11 @@ public class Verifying extends Activity {
 	 * sigFrpmBB 0- committee 1- sc1 2 sc2
 	 */
 	private BallotVerifier createBalloVerifier(List<String> dataBase,
-			List<String> sigFromBB) {
+			List<String> sigFromBB) throws IOException {
 		List<String> ballot1 = Parser.parseString(first_scan, "@");
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
 		List<String> ballot2 = null;
-		Log.d("WORKSHOP", "run 5");
 		if (second_scan.compareTo("") != 0) {
 			ballot2 = Parser.parseString(second_scan, "@");
 			biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
@@ -140,18 +157,11 @@ public class Verifying extends Activity {
 		iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc2 = new SmartCard(biAudit2, ballot1.get(7),
 				sigFromBB.get(2), ballot1.get(8), ID, iCount);
-		Log.d("WORKSHOP", "run 6");
 		ECParams ecParams = new ECParams(dataBase.get(4), dataBase.get(3),
 				dataBase.get(2), dataBase.get(1));
 		Vote vote = new Vote(ballot1.get(3), ballot1.get(4));
 		BallotVerifier bv = null;
-		Log.d("WORKSHOP", "run 7");
-		try {
-			bv = new BallotVerifier(sc1, sc2, ecParams, vote);
-		} catch (IOException e) {
-			Log.d("WORKSHOP", "EXCEPTION!!!" + e.getMessage());
-		}
-
+		bv = new BallotVerifier(sc1, sc2, ecParams, vote);
 		return bv;
 	}
 
@@ -163,9 +173,9 @@ public class Verifying extends Activity {
 		this.bv = i_bv;
 	}
 
-	private List<String> hendlFielsFromApplication(int fileHandler,
+	private List<String> hendleFilesFromApplication(int fileHandler,
 			String delmetor) {
-		List<String> ListParm;
+		List<String> ListParm = null;
 		InputStream is = null;
 		byte[] buffer = null;
 
@@ -176,15 +186,12 @@ public class Verifying extends Activity {
 			is.read(buffer);
 			ListParm = parrsStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
 		} finally {
 			try {
 				is.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
 			}
 		}
 		return ListParm;

@@ -22,7 +22,11 @@ public class ElectronicVoting extends Activity {
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
 		parmters = new HashMap<String, String>();
+		/*TODO:un-comment when go to android*/
     	//IntentIntegrator.initiateScan(this);
+//		if(I_sFromScan == null){
+//			HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+//		}
     	parmters.put("firstScanReasult", I_sFromScan);
     	I_sFromScan=null;
     	setContentView(R.layout.isaodit);
@@ -31,7 +35,11 @@ public class ElectronicVoting extends Activity {
 
 			@Override
 			public void onClick(View v) {
+				/*TODO:un-comment when go to android*/
 				//IntentIntegrator.initiateScan(getActivityInstanc());
+				if(I_sFromScan == null){
+					HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+				}
 				parmters.put("secondScanReasult", I_sFromScan);
 				HelpfoulMathpud.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
 			}
@@ -55,9 +63,7 @@ public class ElectronicVoting extends Activity {
     	  if (scanResult != null) {
     		  I_sFromScan=scanResult.getContents();
     	  	}
-    	  //else sFromScan= null
     	  I_sFromScan=null;
-    	   
     }
     
     public Activity getActivityInstanc(){
