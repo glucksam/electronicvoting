@@ -18,7 +18,6 @@ public class Reasult extends Activity {
 		TextView text =(TextView) findViewById(R.id.text);
 		text.setText(bundle.getString("text"));
 		Button newBallotButton=(Button) findViewById(R.id.newBallot);
-		Button ExitButton=(Button) findViewById(R.id.Exit);
 		Button Exitbutton= (Button) findViewById(R.id.Exit);
 		Exitbutton.setOnClickListener(new ExsitListener(this));
 		if (0==is_Audit.compareTo("No")) {
