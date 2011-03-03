@@ -37,7 +37,7 @@ public class Verifying extends Activity {
 
 	private ProgressBar mProgress;
 
-	/*TODO: remove when done debuging*/
+	/* TODO: remove when done debuging */
 	// private String first_scan;
 	// private String second_scan;
 
@@ -47,33 +47,54 @@ public class Verifying extends Activity {
 	private BallotVerifier bv = null;
 	private Boolean isVerified = false;
 	private String sCandidate = "";
-	
+
 	private Handler mHandler = new Handler() {
 
+		/*
+		 * Error messages: 0 everything went 0K 1 no connection 2 bad ballot 3
+		 * reinstall
+		 */
 		@Override
 		public void handleMessage(Message msg) {
 			HashMap<String, String> parmters = new HashMap<String, String>();
-			if(!isVerified){
-				parmters.put("text",
-						"Vote was NOT created correctly :(");
-			}
-			if (0 == second_scan.compareTo("")) {
-				parmters.put("isAoudit", "no");
-				parmters.put("tiltes", "Costing");
-				if(!parmters.containsKey("text")){
-					parmters.put("text",
-							"Vote was created correctly.\nThe SC's counters are\n");
+			switch (msg.what) {
+			case 0:
+				if (!isVerified) {
+					parmters.put("text", "Vote was NOT created correctly :(");
 				}
-			} else {
-				parmters.put("isAoudit", "yes");
-				parmters.put("tiltes", "Audit resalt");
-				if(!parmters.containsKey("text")){
-					parmters.put("text", "Vote was created correctly\nThe candidate is: " + sCandidate);
+				if (0 == second_scan.compareTo("")) {
+					parmters.put("isAoudit", "no");
+					parmters.put("tiltes", "Costing");
+					if (!parmters.containsKey("text")) {
+						parmters.put("text",
+								"Vote was created correctly.\nThe SC's counters are\n");
+					}
+				} else {
+					parmters.put("isAoudit", "yes");
+					parmters.put("tiltes", "Audit resalt");
+					if (!parmters.containsKey("text")) {
+						parmters.put("text",
+								"Vote was created correctly\nThe candidate is: "
+										+ sCandidate);
+					}
 				}
+				mProgress.setVisibility(8);
+				HelpfoulMathpud.moveActivtyWitheParam(Reasult.class,
+						getActivityInstanc(), parmters);
+				break;
+			case 1:
+				HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
+				break;
+			case 2:
+				HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+				break;
+			case 3:
+				HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
+				break;
+			default:
+				HelpfoulMathpud.Error(getActivityInstanc(), "UNKNOWN");
+				break;
 			}
-			mProgress.setVisibility(8);
-			HelpfoulMathpud.moveActivtyWitheParam(Reasult.class,
-					getActivityInstanc(), parmters);
 		}
 	};
 
@@ -91,35 +112,40 @@ public class Verifying extends Activity {
 				List<String> parmtersFromFIle = hendleFilesFromApplication(
 						R.raw.parmtersfile, "#");
 				List<String> sigFromBB = null;
-
+				int len = 0;
 				try {
-					int len = Server.getFile(parmtersFromFIle.get(0),
+					len = Server.getFile(parmtersFromFIle.get(0),
 							"signature.txt", getActivityInstanc()
 									.getApplicationContext());
-					sigFromBB = handleFielsFromServer("signature.txt", len, "#");
 				} catch (IOException e) {
-					HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
+					mHandler.sendEmptyMessage(1);
+					return;
 				}
-				if (null == sigFromBB || sigFromBB.equals("")){
-					HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
+				sigFromBB = handleFilesFromServer("signature.txt", len, "#");
+				if (null == sigFromBB || sigFromBB.equals("")) {
+					mHandler.sendEmptyMessage(1);
+					return;
 				}
-				if(parmtersFromFIle == null || parmtersFromFIle.equals("")){
-					HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
+				if (parmtersFromFIle == null || parmtersFromFIle.equals("")) {
+					mHandler.sendEmptyMessage(3);
+					return;
 				}
 				try {
 					setBallot(createBalloVerifier(parmtersFromFIle, sigFromBB));
 					isVerified = bv.verify();
-					if(0 != bv.getCandidate()){
-						sCandidate = parmtersFromFIle.get(5+bv.getCandidate());
+					if (0 != bv.getCandidate()) {
+						sCandidate = parmtersFromFIle.get(5 + bv.getCandidate());
 					}
 				} catch (IOException e) {
-					HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+					mHandler.sendEmptyMessage(2);
+					return;
 				} catch (GeneralSecurityException e) {
-					HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
+					mHandler.sendEmptyMessage(3);
+					return;
 				}
 				Log.d("WORKSHOP", bv.toString());
 				Log.d("WORKSHOP", "DONE!!!");
-				/*TODO: send error number if failed*/
+				/* TODO: send error number if failed */
 				mHandler.sendEmptyMessage(0);
 			}
 		}).start();
@@ -134,16 +160,19 @@ public class Verifying extends Activity {
 	 */
 	private BallotVerifier createBalloVerifier(List<String> dataBase,
 			List<String> sigFromBB) throws IOException {
+		Log.d("WORKSHOP", "start create ballot");
 		List<String> ballot1 = Parser.parseString(first_scan, "@");
+		Log.d("WORKSHOP", "done parsing");
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
 		List<String> ballot2 = null;
+		Log.d("WORKSHOP", "before if second scan");
 		if (second_scan.compareTo("") != 0) {
 			ballot2 = Parser.parseString(second_scan, "@");
 			biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
 			biAudit2 = new BigInteger(Base64.decode(ballot2.get(1)));
 		}
-
+		Log.d("WORKSHOP", "after if second scan");
 		Pattern p = Pattern.compile("$", Pattern.LITERAL);
 		String[] tmp = p.split(ballot1.get(0));
 		Parser.parseString(ballot1.get(0), "$");
@@ -151,15 +180,18 @@ public class Verifying extends Activity {
 		int iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc1 = new SmartCard(biAudit1, ballot1.get(5),
 				sigFromBB.get(1), ballot1.get(6), ID, iCount);
-
+		Log.d("WORKSHOP", "after init sc1");
 		tmp = p.split(ballot1.get(1));
 		ID = Integer.valueOf(tmp[0]).intValue();
 		iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc2 = new SmartCard(biAudit2, ballot1.get(7),
 				sigFromBB.get(2), ballot1.get(8), ID, iCount);
+		Log.d("WORKSHOP", "after init sc2");
 		ECParams ecParams = new ECParams(dataBase.get(4), dataBase.get(3),
 				dataBase.get(2), dataBase.get(1));
+		Log.d("WORKSHOP", "after init ecParams");
 		Vote vote = new Vote(ballot1.get(3), ballot1.get(4));
+		Log.d("WORKSHOP", "after init vote");
 		BallotVerifier bv = null;
 		bv = new BallotVerifier(sc1, sc2, ecParams, vote);
 		return bv;
@@ -197,22 +229,17 @@ public class Verifying extends Activity {
 		return ListParm;
 	}
 
-	private List<String> handleFielsFromServer(String fileName, int len,
+	private List<String> handleFilesFromServer(String fileName, int len,
 			String delmetor) {
 		List<String> ListParm = null;
 		FileInputStream fis = null;
 		try {
-			Log.d("WORKSHOP", "run 3.1");
 			fis = openFileInput(fileName);
-			Log.d("WORKSHOP", "run 3.2");
 			byte[] buffer = new byte[len];
-			Log.d("WORKSHOP", "run 3.4");
 			fis.read(buffer, 0, len);
-			Log.d("WORKSHOP", "run 3.6");
 			ListParm = parrsStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
 			return null;
 		} finally {
 			try {
@@ -220,8 +247,7 @@ public class Verifying extends Activity {
 					fis.close();
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
 			}
 		}
 		return ListParm;
