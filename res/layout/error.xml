@@ -16,7 +16,7 @@ android:layout_y="242px"
 >
 </ImageView>
 <TextView
-android:id="@+id/widget55"
+android:id="@+id/textView"
 android:layout_width="190px"
 android:layout_height="wrap_content"
 android:text="Verification Failed!"
