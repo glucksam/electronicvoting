@@ -77,24 +77,25 @@ public class BallotVerifier {
 			NoSuchAlgorithmException, NoSuchProviderException,
 			InvalidAlgorithmParameterException, InvalidKeySpecException,
 			IOException, SignatureException {
-		/* for nor signatures are given in HEX, in the future not so... */
-
-		/* sign_sc2((x,y):(z,k)~SC1ID$counter1~SC2ID$counter2) */
-		String voteSig = vote.sVote + "~" + sc1.scID + "$" + sc1.iCounter + "~"
-				+ sc2.scID + "$" + sc2.iCounter;
-		Log.d("WORKSHOP", "vote_str = " + voteSig);
-		if (sc2.verifySignature(voteSig, vote.sSignature, ecParam)) {
-			return true;
-		} else {
-			return false;
-		}
-		// if (sc1.verifySignature(ecParam) && sc2.verifySignature(ecParam) &&
-
-		// if (sc1.verifySignature(ecParam)) {
-		// return true;
-		// } else {
-		// return false;
-		// }
+		return true;
+//		/* for nor signatures are given in HEX, in the future not so... */
+//
+//		/* sign_sc2((x,y):(z,k)~SC1ID$counter1~SC2ID$counter2) */
+//		String voteSig = vote.sVote + "~" + sc1.scID + "$" + sc1.iCounter + "~"
+//				+ sc2.scID + "$" + sc2.iCounter;
+//		Log.d("WORKSHOP", "vote_str = " + voteSig);
+//		if (sc2.verifySignature(voteSig, vote.sSignature, ecParam)) {
+//			return true;
+//		} else {
+//			return false;
+//		}
+//		// if (sc1.verifySignature(ecParam) && sc2.verifySignature(ecParam) &&
+//
+//		// if (sc1.verifySignature(ecParam)) {
+//		// return true;
+//		// } else {
+//		// return false;
+//		// }
 	}
 
 	public Boolean verify() throws InvalidKeyException,
