@@ -11,3 +11,8 @@ BB signature
 Government signature
 
 List of candidates.
+
+
+The votes file:
+every vote had # at it's end. in between the order is:
+SC1ID$SC1Counter@SC2ID$SC2Counter@vote# 
