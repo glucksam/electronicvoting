@@ -8,8 +8,6 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 
-import android.util.Log;
-
 import local.bouncycastle.math.ec.ECPoint;
 import crypt.ECElGamal;
 import crypt.ECParams;
@@ -119,5 +117,10 @@ public class BallotVerifier {
 	public String getVoteString() {
 		return sc1.scID + "$" + sc1.iCounter + "@" + sc2.scID + "$"
 				+ sc2.iCounter + "@" + vote.sVote;
+	}
+
+	public String getCountersString() {
+		return "sc1: " + sc1.iCounter + ", sc2: "
+				+ sc2.iCounter;
 	}
 }

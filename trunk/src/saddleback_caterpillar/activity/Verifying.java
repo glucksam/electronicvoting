@@ -69,6 +69,7 @@ public class Verifying extends Activity {
 						} else {
 							sRes += ", but not casted properly";
 						}
+						sRes += "\ncounters- " + bv.getCountersString();
 						parmters.put("text", sRes);
 					}
 				} else {
@@ -77,7 +78,7 @@ public class Verifying extends Activity {
 					if (!parmters.containsKey("text")) {
 						parmters.put("text",
 								"Vote was created correctly\nThe candidate is: "
-										+ sCandidate);
+										+ sCandidate + "\ncounters- " + bv.getCountersString());
 					}
 				}
 				mProgress.setVisibility(8);
