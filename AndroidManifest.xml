@@ -11,8 +11,8 @@
 			</intent-filter>
 		</activity>
 		<activity android:name=".Verifying" />
-		<activity android:name=".Erorr" />
-		<activity android:name=".Reasult" />
+		<activity android:name=".Error" />
+		<activity android:name=".Result" />
 	</application>
 
 	<uses-permission android:name="android.permission.INTERNET" />

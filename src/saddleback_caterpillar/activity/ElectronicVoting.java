@@ -2,7 +2,7 @@ package saddleback_caterpillar.activity;
 
 
 import java.util.HashMap;
-import tools.HelpfoulMathpud;
+import tools.HelpfulMathods;
 import tools.IntentIntegrator;
 import tools.IntentResult;
 import android.app.Activity;
@@ -25,11 +25,11 @@ public class ElectronicVoting extends Activity {
 		/*TODO:un-comment when go to android*/
     	//IntentIntegrator.initiateScan(this);
 //		if(I_sFromScan == null){
-//			HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+//			HelpfulMathods.Error(getActivityInstanc(), "BAD_BALLOT");
 //		}
     	parmters.put("firstScanReasult", I_sFromScan);
     	I_sFromScan=null;
-    	setContentView(R.layout.isaodit);
+    	setContentView(R.layout.isaudit);
 		Button yesButton=(Button) findViewById(R.id.Yes);
 		yesButton.setOnClickListener(new  OnClickListener(){
 
@@ -38,10 +38,10 @@ public class ElectronicVoting extends Activity {
 				/*TODO:un-comment when go to android*/
 				//IntentIntegrator.initiateScan(getActivityInstanc());
 				if(I_sFromScan == null){
-					HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+					HelpfulMathods.Error(getActivityInstanc(), "BAD_BALLOT");
 				}
 				parmters.put("secondScanReasult", I_sFromScan);
-				HelpfoulMathpud.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
+				HelpfulMathods.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
 			}
 			
 		});
@@ -51,7 +51,7 @@ public class ElectronicVoting extends Activity {
 			@Override
 			public void onClick(View v) {
 				parmters.put("secondScanReasult","");
-				HelpfoulMathpud.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
+				HelpfulMathods.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
 			}
 		});
     }

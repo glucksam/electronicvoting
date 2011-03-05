@@ -1,33 +1,23 @@
 package saddleback_caterpillar.activity;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import local.bouncycastle.util.encoders.Base64;
 import saddleback_caterpillar.workshop.BallotVerifier;
-import tools.HelpfoulMathpud;
+import tools.HelpfulMathods;
 import tools.Parser;
 import tools.Server;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.UserDictionary.Words;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.widget.ProgressBar;
 import crypt.ECParams;
@@ -45,8 +35,7 @@ public class Verifying extends Activity {
 	/* TODO: think of a way to manage all errors */
 
 	private String first_scan = "1111$336@2222$301@113@(hgFYk9v192wdah1qkCIA6KwmmlMnsMASCAFL14iKIrg=,jAwd+/4nth7wkoBQUAuT2xbf9LSU1FF0MT/L1sE7OZs=):(7QTT5KNsNc7dXeJ4pFzYnso8X99/q3dAzzH0pIiwnfg=,HrfJm/W/TcV3p7Z7qEaKJzUuxHRmQqqMyH7fLR9U9iQ=)@(AMxrkqu8pGWY2tOeH6nG7NJd2YzppHK0tA==,APspsWJk1PkPlSwhEX+NLZ1/bb/J4ge2tg==)@(CWpplNQDw2FQ8c/qZDrHnrkdzRB+qo2dMdSYLx6kchs=,eRViFxjjOKp6UGWQWby69r+bx62I8jHxVnx5ermKuIo=)@(AJmYn0p64t36qmLCSekBZqApV9cqVp+FxA==,YgbhMP5DbyCbgc9/ttZQkpf/L+MIY/wr)@(wqyzZwul53JkCsn57N5imLhcRSieXh8fAioNu/brqO0=,Dg9TxjF2JXEB9Jt0dlzgtrTz9PbwqM9BxhNkqMf9rY8=)@(DcQU9YE/bU7jbF8fidV47tSzeTFm6TSo,CFAIzl1Bcna4rWyjGKtxZt2hT6gZ8qgX)";
-	private String second_scan = "";// =
-									// "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
+	private String second_scan = "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
 
 	private BallotVerifier bv = null;
 	private Boolean isVerified = false;
@@ -72,8 +61,8 @@ public class Verifying extends Activity {
 					sRes = "Your vote was created correctly";
 				}
 				if (0 == second_scan.compareTo("")) {
-					parmters.put("isAoudit", "no");
-					parmters.put("tiltes", "Costing");
+					parmters.put("isAudit", "no");
+					parmters.put("titles", "Casting");
 					if (!parmters.containsKey("text")) {
 						if (isCasted) {
 							sRes += " and casted properly";
@@ -83,8 +72,8 @@ public class Verifying extends Activity {
 						parmters.put("text", sRes);
 					}
 				} else {
-					parmters.put("isAoudit", "yes");
-					parmters.put("tiltes", "Audit resalt");
+					parmters.put("isAudit", "yes");
+					parmters.put("titles", "Audit result");
 					if (!parmters.containsKey("text")) {
 						parmters.put("text",
 								"Vote was created correctly\nThe candidate is: "
@@ -92,20 +81,20 @@ public class Verifying extends Activity {
 					}
 				}
 				mProgress.setVisibility(8);
-				HelpfoulMathpud.moveActivtyWitheParam(Reasult.class,
+				HelpfulMathods.moveActivtyWitheParam(Result.class,
 						getActivityInstanc(), parmters);
 				break;
 			case 1:
-				HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
+				HelpfulMathods.Error(getActivityInstanc(), "NO_CONNECTION");
 				break;
 			case 2:
-				HelpfoulMathpud.Error(getActivityInstanc(), "BAD_BALLOT");
+				HelpfulMathods.Error(getActivityInstanc(), "BAD_BALLOT");
 				break;
 			case 3:
-				HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
+				HelpfulMathods.Error(getActivityInstanc(), "REINSTALL");
 				break;
 			default:
-				HelpfoulMathpud.Error(getActivityInstanc(), "UNKNOWN");
+				HelpfulMathods.Error(getActivityInstanc(), "UNKNOWN");
 				break;
 			}
 		}

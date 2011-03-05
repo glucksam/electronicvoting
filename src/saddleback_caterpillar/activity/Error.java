@@ -1,14 +1,13 @@
 package saddleback_caterpillar.activity;
 
-import listener.ExsitListener;
+import listener.ExitListener;
 import listener.goToAntherActivtiyListener;
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class Erorr extends Activity {
+public class Error extends Activity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -19,6 +18,6 @@ public class Erorr extends Activity {
 		Button Backbutton=(Button) findViewById(R.id.Back);
 		Backbutton.setOnClickListener(new goToAntherActivtiyListener(ElectronicVoting.class, this));
 		Button Exitbutton= (Button) findViewById(R.id.Exit);
-		Exitbutton.setOnClickListener(new ExsitListener(this));
+		Exitbutton.setOnClickListener(new ExitListener(this));
 	}
 }
