@@ -143,7 +143,8 @@ public class Verifying extends Activity {
 				if (null == sigFromBB || sigFromBB.equals("")) {
 					mHandler.sendEmptyMessage(1);
 					return;
-				}else if (parametersFromFile == null || parametersFromFile.equals("")) {
+				} else if (parametersFromFile == null
+						|| parametersFromFile.equals("")) {
 					mHandler.sendEmptyMessage(3);
 					return;
 				}
