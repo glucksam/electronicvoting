@@ -78,24 +78,26 @@ public class BallotVerifier {
 			InvalidAlgorithmParameterException, InvalidKeySpecException,
 			IOException, SignatureException {
 		return true;
-//		/* for nor signatures are given in HEX, in the future not so... */
-//
-//		/* sign_sc2((x,y):(z,k)~SC1ID$counter1~SC2ID$counter2) */
-//		String voteSig = vote.sVote + "~" + sc1.scID + "$" + sc1.iCounter + "~"
-//				+ sc2.scID + "$" + sc2.iCounter;
-//		Log.d("WORKSHOP", "vote_str = " + voteSig);
-//		if (sc2.verifySignature(voteSig, vote.sSignature, ecParam)) {
-//			return true;
-//		} else {
-//			return false;
-//		}
-//		// if (sc1.verifySignature(ecParam) && sc2.verifySignature(ecParam) &&
-//
-//		// if (sc1.verifySignature(ecParam)) {
-//		// return true;
-//		// } else {
-//		// return false;
-//		// }
+		// /* for nor signatures are given in HEX, in the future not so... */
+		//
+		// /* sign_sc2((x,y):(z,k)~SC1ID$counter1~SC2ID$counter2) */
+		// String voteSig = vote.sVote + "~" + sc1.scID + "$" + sc1.iCounter +
+		// "~"
+		// + sc2.scID + "$" + sc2.iCounter;
+		// Log.d("WORKSHOP", "vote_str = " + voteSig);
+		// if (sc2.verifySignature(voteSig, vote.sSignature, ecParam)) {
+		// return true;
+		// } else {
+		// return false;
+		// }
+		// // if (sc1.verifySignature(ecParam) && sc2.verifySignature(ecParam)
+		// &&
+		//
+		// // if (sc1.verifySignature(ecParam)) {
+		// // return true;
+		// // } else {
+		// // return false;
+		// // }
 	}
 
 	public Boolean verify() throws InvalidKeyException,
@@ -111,5 +113,11 @@ public class BallotVerifier {
 		String ecParams_str = this.ecParam.toString();
 		return "cs1:\n" + cs1_str + "\ncs2:\n" + cs2_str + "\n"
 				+ ecParams_str.toString() + "\nvote: " + this.vote.toString();
+	}
+
+	/* SC1ID~SC1Counter@SC2ID~SC2Counter@vote */
+	public String getVoteString() {
+		return sc1.scID + "$" + sc1.iCounter + "@" + sc2.scID + "$"
+				+ sc2.iCounter + "@" + vote.sVote;
 	}
 }
