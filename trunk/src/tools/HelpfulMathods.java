@@ -3,14 +3,13 @@ package tools;
 import java.util.HashMap;
 import java.util.Map;
 
-import saddleback_caterpillar.activity.Erorr;
+import saddleback_caterpillar.activity.Error;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
-public class HelpfoulMathpud {
+public class HelpfulMathods {
 	public  static void moveActivtyWitheParam(Class<?> subActivity,Activity fatherActivity,Map<String,String> parmters){
 		Bundle bundle = new Bundle();
 		for(String s : parmters.keySet()){
@@ -34,6 +33,6 @@ public class HelpfoulMathpud {
 			problem = "An unknown error has occured, please try to restart your android";
 		}
 		parmters.put("problem", problem);
-		moveActivtyWitheParam(Erorr.class , active ,parmters);
+		moveActivtyWitheParam(Error.class , active ,parmters);
 	}
 }
