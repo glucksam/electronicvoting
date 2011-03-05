@@ -26,6 +26,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.UserDictionary.Words;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.widget.ProgressBar;
@@ -42,11 +43,13 @@ public class Verifying extends Activity {
 	// private String second_scan;
 
 	private String first_scan = "1111$336@2222$301@113@(hgFYk9v192wdah1qkCIA6KwmmlMnsMASCAFL14iKIrg=,jAwd+/4nth7wkoBQUAuT2xbf9LSU1FF0MT/L1sE7OZs=):(7QTT5KNsNc7dXeJ4pFzYnso8X99/q3dAzzH0pIiwnfg=,HrfJm/W/TcV3p7Z7qEaKJzUuxHRmQqqMyH7fLR9U9iQ=)@(AMxrkqu8pGWY2tOeH6nG7NJd2YzppHK0tA==,APspsWJk1PkPlSwhEX+NLZ1/bb/J4ge2tg==)@(CWpplNQDw2FQ8c/qZDrHnrkdzRB+qo2dMdSYLx6kchs=,eRViFxjjOKp6UGWQWby69r+bx62I8jHxVnx5ermKuIo=)@(AJmYn0p64t36qmLCSekBZqApV9cqVp+FxA==,YgbhMP5DbyCbgc9/ttZQkpf/L+MIY/wr)@(wqyzZwul53JkCsn57N5imLhcRSieXh8fAioNu/brqO0=,Dg9TxjF2JXEB9Jt0dlzgtrTz9PbwqM9BxhNkqMf9rY8=)@(DcQU9YE/bU7jbF8fidV47tSzeTFm6TSo,CFAIzl1Bcna4rWyjGKtxZt2hT6gZ8qgX)";
-	private String second_scan = "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
+	private String second_scan = "";// =
+									// "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
 
 	private BallotVerifier bv = null;
 	private Boolean isVerified = false;
 	private String sCandidate = "";
+	private String sServerUrl = "";
 
 	private Handler mHandler = new Handler() {
 
@@ -57,17 +60,24 @@ public class Verifying extends Activity {
 		@Override
 		public void handleMessage(Message msg) {
 			HashMap<String, String> parmters = new HashMap<String, String>();
+			String sRes = "";
 			switch (msg.what) {
 			case 0:
 				if (!isVerified) {
 					parmters.put("text", "Vote was NOT created correctly :(");
+				} else {
+					sRes = "Your vote was created correctly";
 				}
 				if (0 == second_scan.compareTo("")) {
 					parmters.put("isAoudit", "no");
 					parmters.put("tiltes", "Costing");
 					if (!parmters.containsKey("text")) {
-						parmters.put("text",
-								"Vote was created correctly.\nThe SC's counters are\n");
+						if (isCasted()) {
+							sRes += " and casted properly";
+						} else {
+							sRes += ", but not casted properly";
+						}
+						parmters.put("text", sRes);
 					}
 				} else {
 					parmters.put("isAoudit", "yes");
@@ -109,14 +119,18 @@ public class Verifying extends Activity {
 				/* TODO: un-comment when done testing */
 				// first_scan = bundle.getString("firstScanReasult");
 				// second_scan = bundle.getString("secondScanReasult");
-				List<String> parmtersFromFIle = hendleFilesFromApplication(
+				List<String> parametersFromFile = hendleFilesFromApplication(
 						R.raw.parmtersfile, "#");
+				if (parametersFromFile.size() < 5) {
+					mHandler.sendEmptyMessage(1);
+					return;
+				}
+				sServerUrl = parametersFromFile.get(0);
 				List<String> sigFromBB = null;
 				int len = 0;
 				try {
-					len = Server.getFile(parmtersFromFIle.get(0),
-							"signature.txt", getActivityInstanc()
-									.getApplicationContext());
+					len = Server.getFile(sServerUrl, "signature.txt",
+							getActivityInstanc().getApplicationContext());
 				} catch (IOException e) {
 					mHandler.sendEmptyMessage(1);
 					return;
@@ -126,15 +140,16 @@ public class Verifying extends Activity {
 					mHandler.sendEmptyMessage(1);
 					return;
 				}
-				if (parmtersFromFIle == null || parmtersFromFIle.equals("")) {
+				if (parametersFromFile == null || parametersFromFile.equals("")) {
 					mHandler.sendEmptyMessage(3);
 					return;
 				}
 				try {
-					setBallot(createBalloVerifier(parmtersFromFIle, sigFromBB));
+					setBallot(createBalloVerifier(parametersFromFile, sigFromBB));
 					isVerified = bv.verify();
 					if (0 != bv.getCandidate()) {
-						sCandidate = parmtersFromFIle.get(5 + bv.getCandidate());
+						sCandidate = parametersFromFile.get(5 + bv
+								.getCandidate());
 					}
 				} catch (IOException e) {
 					mHandler.sendEmptyMessage(2);
@@ -205,6 +220,32 @@ public class Verifying extends Activity {
 		this.bv = i_bv;
 	}
 
+	private Boolean isCasted() {
+		/* download file */
+		int len = 0;
+		int iAnswer = 0;
+		List<String> sVotes = null;
+		try {
+			len = Server.getFile(sServerUrl, "votes.txt", getActivityInstanc()
+					.getApplicationContext());
+			if (len == 0) {
+				iAnswer = 1;
+			} else {
+				sVotes = handleFilesFromServer("votes.txt", len, "#");
+				/* look for the vote string in file */
+				if(sVotes.contains(bv.getVoteString())){
+					return true;
+				}else{
+					return false;
+				}
+			}
+		} catch (IOException e) {
+			iAnswer = 1;
+		}
+		mHandler.sendEmptyMessage(iAnswer);
+		return false;
+	}
+
 	private List<String> hendleFilesFromApplication(int fileHandler,
 			String delmetor) {
 		List<String> ListParm = null;
@@ -216,7 +257,7 @@ public class Verifying extends Activity {
 			int size = is.available();
 			buffer = new byte[size];
 			is.read(buffer);
-			ListParm = parrsStringFromfiles(buffer, delmetor);
+			ListParm = parseStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
 			HelpfoulMathpud.Error(getActivityInstanc(), "REINSTALL");
 		} finally {
@@ -237,7 +278,7 @@ public class Verifying extends Activity {
 			fis = openFileInput(fileName);
 			byte[] buffer = new byte[len];
 			fis.read(buffer, 0, len);
-			ListParm = parrsStringFromfiles(buffer, delmetor);
+			ListParm = parseStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
 			HelpfoulMathpud.Error(getActivityInstanc(), "NO_CONNECTION");
 			return null;
@@ -253,7 +294,7 @@ public class Verifying extends Activity {
 		return ListParm;
 	}
 
-	private List<String> parrsStringFromfiles(byte[] buffer, String delmetor) {
+	private List<String> parseStringFromfiles(byte[] buffer, String delmetor) {
 		String text = new String(buffer);
 		List<String> ListParm = Parser.parseString(text, delmetor);
 		return ListParm;
