@@ -9,15 +9,14 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import android.content.Context;
-import android.util.Log;
 
 public class Server {
 	/**
 	 * Connect to the server and dwonlod files
 	 * 
 	 * @param i_sFileName
-	 * @return the pathe to the file or the work "Exception" if execprion
-	 *         addored
+	 * @return the path to the file or the work "Exception" if exection
+	 *         accured
 	 */
 	static public int getFile(String i_sUrl, String fileName, Context I_Contex)
 			throws IOException {
@@ -33,7 +32,7 @@ public class Server {
 				urlConn.getInputStream()));
 		// Write a file to the disk
 		FileOutputStream f_fsOut = I_Contex.openFileOutput(fileName,
-				I_Contex.MODE_WORLD_READABLE);
+				Context.MODE_WORLD_READABLE);
 		OutputStreamWriter f_osSw = new OutputStreamWriter(f_fsOut);
 		String line;
 		// Prieprting the String to writ to the disk
