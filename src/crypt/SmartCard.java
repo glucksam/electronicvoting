@@ -29,19 +29,14 @@ public class SmartCard {
 
 	/* sign_sc1(g^r1 | sn1) = sign_sc1((x,y)~SC1ID$counter1) */
 	public String generateMessage() throws IOException {
-		//return this.sGInR + "~" + this.scID + "$" + this.iCounter;
-		return "c6b0f3e1ac371156c07fe597c5b45fb74a32cb9b9b545365cf56972b45db4625";
+		return this.sGInR + "~" + this.scID + "$" + this.iCounter;
 	}
 
 	public Boolean verifySignature(ECParams ecParam)
 			throws InvalidKeyException, NoSuchAlgorithmException,
 			NoSuchProviderException, InvalidKeySpecException, IOException,
 			SignatureException, InvalidAlgorithmParameterException {
-		ECDSAVerifier verifier = new ECDSAVerifier(
-				Utils.translateStringToPointHex(sVerificationKey),
-				ecParam.sDSAHashName, ecParam.sDSACurveName);
-		return verifier.verify(this.generateMessage().getBytes(),
-				sSignature.getBytes());
+		return verifySignature(this.generateMessage(), this.sSignature, ecParam);
 	}
 
 	public Boolean verifySignature(String msg, String sig, ECParams ecParam)
@@ -50,8 +45,10 @@ public class SmartCard {
 			SignatureException, InvalidAlgorithmParameterException {
 		ECDSAVerifier verifier = new ECDSAVerifier(
 				Utils.translateStringToPointHex(sVerificationKey),
-				ecParam.sDSAHashName, ecParam.sDSACurveName);
-		return verifier.verify(msg.getBytes(), sig.getBytes());
+				ecParam.sDSACurveName);
+		Point pSig = Utils.translateStringToPointBase64(sig);
+		byte[] message = Utils.getSHA(msg, ecParam.sDSAHashName);
+		return verifier.verify(message, pSig.x, pSig.y);
 	}
 
 	public String toString() {

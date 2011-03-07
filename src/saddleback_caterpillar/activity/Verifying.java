@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -31,7 +32,6 @@ public class Verifying extends Activity {
 	/* TODO: remove when done debuging */
 	// private String first_scan;
 	// private String second_scan;
-
 
 	private String first_scan = "1111$336@2222$301@113@(hgFYk9v192wdah1qkCIA6KwmmlMnsMASCAFL14iKIrg=,jAwd+/4nth7wkoBQUAuT2xbf9LSU1FF0MT/L1sE7OZs=):(7QTT5KNsNc7dXeJ4pFzYnso8X99/q3dAzzH0pIiwnfg=,HrfJm/W/TcV3p7Z7qEaKJzUuxHRmQqqMyH7fLR9U9iQ=)@(AMxrkqu8pGWY2tOeH6nG7NJd2YzppHK0tA==,APspsWJk1PkPlSwhEX+NLZ1/bb/J4ge2tg==)@(CWpplNQDw2FQ8c/qZDrHnrkdzRB+qo2dMdSYLx6kchs=,eRViFxjjOKp6UGWQWby69r+bx62I8jHxVnx5ermKuIo=)@(AJmYn0p64t36qmLCSekBZqApV9cqVp+FxA==,YgbhMP5DbyCbgc9/ttZQkpf/L+MIY/wr)@(wqyzZwul53JkCsn57N5imLhcRSieXh8fAioNu/brqO0=,Dg9TxjF2JXEB9Jt0dlzgtrTz9PbwqM9BxhNkqMf9rY8=)@(DcQU9YE/bU7jbF8fidV47tSzeTFm6TSo,CFAIzl1Bcna4rWyjGKtxZt2hT6gZ8qgX)";
 	private String second_scan = "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
@@ -75,9 +75,11 @@ public class Verifying extends Activity {
 					parmters.put("isAudit", "yes");
 					parmters.put("titles", "Audit result");
 					if (!parmters.containsKey("text")) {
-						parmters.put("text",
+						parmters.put(
+								"text",
 								"Vote was created correctly\nThe candidate is: "
-										+ sCandidate + "\ncounters- " + bv.getCountersString());
+										+ sCandidate + "\ncounters- "
+										+ bv.getCountersString());
 					}
 				}
 				mProgress.setVisibility(8);
@@ -111,6 +113,8 @@ public class Verifying extends Activity {
 				/* TODO: un-comment when done testing */
 				// first_scan = bundle.getString("firstScanReasult");
 				// second_scan = bundle.getString("secondScanReasult");
+				Security.addProvider(new local.bouncycastle.jce.provider.BouncyCastleProvider());
+
 				List<String> parametersFromFile;
 				parametersFromFile = hendleFilesFromApplication(
 						R.raw.parmtersfile, "#");
@@ -139,7 +143,9 @@ public class Verifying extends Activity {
 				}
 				try {
 					setBallot(createBalloVerifier(parametersFromFile, sigFromBB));
+					Log.d("WORKSHOP", "done creating ballot");
 					isVerified = bv.verify();
+					Log.d("WORKSHOP", "done verifying ballot");
 					if (0 != bv.getCandidate()) {
 						sCandidate = parametersFromFile.get(5 + bv
 								.getCandidate());
@@ -149,6 +155,7 @@ public class Verifying extends Activity {
 					return;
 				} catch (GeneralSecurityException e) {
 					mHandler.sendEmptyMessage(3);
+					Log.d("WORKSHOP", "GeneralSecurityException " + e.getMessage());
 					return;
 				}
 				try {
@@ -170,23 +177,19 @@ public class Verifying extends Activity {
 	}
 
 	/*
-	 * sigFrpmBB 0- committee 1- sc1 2 sc2
+	 * sigFromBB: 0- committee 1- sc1 2 sc2
 	 */
 	private BallotVerifier createBalloVerifier(List<String> dataBase,
 			List<String> sigFromBB) throws IOException {
-		Log.d("WORKSHOP", "start create ballot");
 		List<String> ballot1 = Parser.parseString(first_scan, "@");
-		Log.d("WORKSHOP", "done parsing");
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
 		List<String> ballot2 = null;
-		Log.d("WORKSHOP", "before if second scan");
 		if (second_scan.compareTo("") != 0) {
 			ballot2 = Parser.parseString(second_scan, "@");
 			biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
 			biAudit2 = new BigInteger(Base64.decode(ballot2.get(1)));
 		}
-		Log.d("WORKSHOP", "after if second scan");
 		Pattern p = Pattern.compile("$", Pattern.LITERAL);
 		String[] tmp = p.split(ballot1.get(0));
 		Parser.parseString(ballot1.get(0), "$");
@@ -194,18 +197,14 @@ public class Verifying extends Activity {
 		int iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc1 = new SmartCard(biAudit1, ballot1.get(5),
 				sigFromBB.get(1), ballot1.get(6), ID, iCount);
-		Log.d("WORKSHOP", "after init sc1");
 		tmp = p.split(ballot1.get(1));
 		ID = Integer.valueOf(tmp[0]).intValue();
 		iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc2 = new SmartCard(biAudit2, ballot1.get(7),
 				sigFromBB.get(2), ballot1.get(8), ID, iCount);
-		Log.d("WORKSHOP", "after init sc2");
 		ECParams ecParams = new ECParams(dataBase.get(4), dataBase.get(3),
 				dataBase.get(2), dataBase.get(1));
-		Log.d("WORKSHOP", "after init ecParams");
 		Vote vote = new Vote(ballot1.get(3), ballot1.get(4));
-		Log.d("WORKSHOP", "after init vote");
 		BallotVerifier bv = null;
 		bv = new BallotVerifier(sc1, sc2, ecParams, vote);
 		return bv;

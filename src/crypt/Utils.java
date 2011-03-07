@@ -1,7 +1,10 @@
 package crypt;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import local.bouncycastle.math.ec.ECPoint;
 import local.bouncycastle.util.encoders.Base64;
@@ -55,7 +58,7 @@ public class Utils {
 		return p;
 	}
 
-	public static Point translateStringToPointHex(String sRaw) {
+	public static Point translateStringToPointHex(String sRaw){
 		Point p = new Point();
 		String sTmp = sRaw.replace(")", "");
 		sTmp = sTmp.replace("(", "");
@@ -63,5 +66,15 @@ public class Utils {
 		p.x = new BigInteger(1, Hex.decode(point[0]));
 		p.y = new BigInteger(1, Hex.decode(point[1]));
 		return p;
+	}
+
+	public static byte[] getSHA(String data, String shaType)
+			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		MessageDigest hash = MessageDigest.getInstance("SHA-" + shaType);
+		hash.reset();
+		hash.update(data.getBytes());
+		byte[] bDigest = hash.digest();
+		BigInteger intest = new BigInteger(1, bDigest);
+		return intest.toByteArray();
 	}
 }
