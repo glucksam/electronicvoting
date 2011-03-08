@@ -53,28 +53,42 @@ public class Utils {
 		String sTmp = sRaw.replace(")", "");
 		sTmp = sTmp.replace("(", "");
 		String[] point = sTmp.split(",");
-		p.x = new BigInteger(1, Base64.decode(point[0]));
-		p.y = new BigInteger(1, Base64.decode(point[1]));
-		return p;
+		if (point.length > 1) {
+			p.x = new BigInteger(1, Base64.decode(point[0]));
+			p.y = new BigInteger(1, Base64.decode(point[1]));
+			return p;
+		} else {
+			throw new IOException("could not parse string");
+		}
 	}
 
-	public static Point translateStringToPointHex(String sRaw){
+	public static String translatePointToStringBase64(Point p){
+		String x = new String(Base64.encode(p.x.toByteArray()));
+		String y = new String(Base64.encode(p.y.toByteArray()));
+		return "(" + x + "," + y + ")";
+	}
+
+	public static Point translateStringToPointHex(String sRaw)
+			throws IOException {
 		Point p = new Point();
 		String sTmp = sRaw.replace(")", "");
 		sTmp = sTmp.replace("(", "");
 		String[] point = sTmp.split(",");
-		p.x = new BigInteger(1, Hex.decode(point[0]));
-		p.y = new BigInteger(1, Hex.decode(point[1]));
-		return p;
+		if (point.length > 1) {
+			p.x = new BigInteger(1, Hex.decode(point[0]));
+			p.y = new BigInteger(1, Hex.decode(point[1]));
+			return p;
+		} else {
+			throw new IOException("could not parse string: " + sRaw);
+		}
 	}
 
-	public static byte[] getSHA(String data, String shaType)
+	public static BigInteger getHash(String data, String hashType)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		MessageDigest hash = MessageDigest.getInstance("SHA-" + shaType);
+		MessageDigest hash = MessageDigest.getInstance(hashType);
 		hash.reset();
 		hash.update(data.getBytes());
 		byte[] bDigest = hash.digest();
-		BigInteger intest = new BigInteger(1, bDigest);
-		return intest.toByteArray();
+		return new BigInteger(1, bDigest);
 	}
 }

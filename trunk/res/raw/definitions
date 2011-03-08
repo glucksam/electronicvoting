@@ -6,9 +6,11 @@ ElGamalEC P256
 ECDSA Hash = SHA256EwithECDSA
 ECDSA EC P196
 
-BB signature
+BB signature = sc1 sig
 
-Government signature
+Government signature = sc2 sig
+
+** the committee sig = sc2 sig
 
 List of candidates.
 

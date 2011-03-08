@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +14,20 @@ import saddleback_caterpillar.workshop.BallotVerifier;
 import tools.HelpfulMathods;
 import tools.Parser;
 import tools.Server;
+import Exceptions.BadBallotException;
+import Exceptions.NoConnectionException;
+import Exceptions.ReinstallException;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.widget.ProgressBar;
+import crypt.ECDSAVerifier;
 import crypt.ECParams;
+import crypt.Point;
 import crypt.SmartCard;
+import crypt.Utils;
 import crypt.Vote;
 
 public class Verifying extends Activity {
@@ -41,6 +46,10 @@ public class Verifying extends Activity {
 	private Boolean isCasted = false;
 	private String sCandidate = "";
 	private String sServerUrl = "";
+	private Point pGovernmentVKey;
+	private Point pCommitteeVKey;
+	private Point pBBVKey;
+	private ECParams ecParams;
 
 	private Handler mHandler = new Handler() {
 
@@ -114,62 +123,71 @@ public class Verifying extends Activity {
 				// first_scan = bundle.getString("firstScanReasult");
 				// second_scan = bundle.getString("secondScanReasult");
 				Security.addProvider(new local.bouncycastle.jce.provider.BouncyCastleProvider());
-
-				List<String> parametersFromFile;
-				parametersFromFile = hendleFilesFromApplication(
-						R.raw.parmtersfile, "#");
-				if (parametersFromFile.size() < 5) {
-					mHandler.sendEmptyMessage(1);
-					return;
-				}
-				sServerUrl = parametersFromFile.get(0);
-				List<String> sigFromBB = null;
-				int len = 0;
 				try {
-					len = Server.getFile(sServerUrl, "signature.txt",
-							getActivityInstanc().getApplicationContext());
-				} catch (IOException e) {
+					Log.d("WORKSHOP", "starting try");
+					verifyBallot();
+				} catch (NoConnectionException e) {
+					Log.d("WORKSHOP",
+							"NoConnectionException: " + e.getMessage());
 					mHandler.sendEmptyMessage(1);
 					return;
-				}
-				sigFromBB = handleFilesFromServer("signature.txt", len, "#");
-				if (null == sigFromBB || sigFromBB.equals("")) {
-					mHandler.sendEmptyMessage(1);
-					return;
-				} else if (parametersFromFile == null
-						|| parametersFromFile.equals("")) {
-					mHandler.sendEmptyMessage(3);
-					return;
-				}
-				try {
-					setBallot(createBalloVerifier(parametersFromFile, sigFromBB));
-					Log.d("WORKSHOP", "done creating ballot");
-					isVerified = bv.verify();
-					Log.d("WORKSHOP", "done verifying ballot");
-					if (0 != bv.getCandidate()) {
-						sCandidate = parametersFromFile.get(5 + bv
-								.getCandidate());
-					}
-				} catch (IOException e) {
+				} catch (BadBallotException e) {
+					Log.d("WORKSHOP", "BadBallotException: " + e.getMessage());
 					mHandler.sendEmptyMessage(2);
 					return;
-				} catch (GeneralSecurityException e) {
+				} catch (ReinstallException e) {
+					Log.d("WORKSHOP", "ReinstallException: " + e.getMessage());
 					mHandler.sendEmptyMessage(3);
-					Log.d("WORKSHOP", "GeneralSecurityException " + e.getMessage());
-					return;
-				}
-				try {
-					if (bv.getCandidate() < 0) {
-						isCasted = isCasted();
-					}
-				} catch (IOException e) {
-					mHandler.sendEmptyMessage(1);
 					return;
 				}
 				Log.d("WORKSHOP", "DONE!!!");
 				mHandler.sendEmptyMessage(0);
 			}
 		}).start();
+	}
+
+	private void verifyBallot() throws ReinstallException,
+			NoConnectionException, BadBallotException {
+		List<String> parametersFromFile;
+		List<String> sigFromBB = null;
+
+		parametersFromFile = hendleFilesFromApplication(R.raw.parmtersfile, "#");
+		if (parametersFromFile.size() < 7) {
+			throw new ReinstallException("not enough parameters");
+		}
+		sServerUrl = parametersFromFile.get(0);
+		try {
+			pBBVKey = Utils.translateStringToPointHex(parametersFromFile.get(5));
+			pGovernmentVKey = Utils.translateStringToPointHex(parametersFromFile
+					.get(6));
+		} catch (IOException e) {
+			throw new ReinstallException("could not figure signature: "
+					+ e.getMessage());
+		}
+		ecParams = new ECParams(parametersFromFile.get(4),
+				parametersFromFile.get(3), parametersFromFile.get(2),
+				parametersFromFile.get(1));
+		sigFromBB = getFileFromServer("signature.txt", pGovernmentVKey, pBBVKey,
+				"#");
+		if (null == sigFromBB || sigFromBB.size() < 3) {
+			throw new NoConnectionException("signatures file is too short");
+		}
+		try {
+			pCommitteeVKey = Utils.translateStringToPointHex(sigFromBB.get(0));
+		} catch (IOException e) {
+			throw new NoConnectionException(
+					"could figure our committee signature");
+		}
+		setBallot(createBalloVerifier(parametersFromFile, sigFromBB));
+		Log.d("WORKSHOP", "done creating ballot");
+		isVerified = bv.verify();
+		Log.d("WORKSHOP", "done verifying ballot");
+		if (0 < bv.getCandidate()) {
+			sCandidate = parametersFromFile.get(5 + bv.getCandidate());
+		}
+		if (bv.getCandidate() < 0) {
+			isCasted = isCasted();
+		}
 	}
 
 	private Activity getActivityInstanc() {
@@ -180,7 +198,8 @@ public class Verifying extends Activity {
 	 * sigFromBB: 0- committee 1- sc1 2 sc2
 	 */
 	private BallotVerifier createBalloVerifier(List<String> dataBase,
-			List<String> sigFromBB) throws IOException {
+			List<String> sigFromBB) throws ReinstallException,
+			BadBallotException {
 		List<String> ballot1 = Parser.parseString(first_scan, "@");
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
@@ -202,11 +221,9 @@ public class Verifying extends Activity {
 		iCount = Integer.valueOf(tmp[1]).intValue();
 		SmartCard sc2 = new SmartCard(biAudit2, ballot1.get(7),
 				sigFromBB.get(2), ballot1.get(8), ID, iCount);
-		ECParams ecParams = new ECParams(dataBase.get(4), dataBase.get(3),
-				dataBase.get(2), dataBase.get(1));
 		Vote vote = new Vote(ballot1.get(3), ballot1.get(4));
 		BallotVerifier bv = null;
-		bv = new BallotVerifier(sc1, sc2, ecParams, vote);
+		bv = new BallotVerifier(sc1, sc2, this.ecParams, vote);
 		return bv;
 	}
 
@@ -218,28 +235,34 @@ public class Verifying extends Activity {
 		this.bv = i_bv;
 	}
 
-	private Boolean isCasted() throws IOException {
-		/* download file */
-		int len = 0;
-		List<String> sVotes = null;
-		len = Server.getFile(sServerUrl, "votes.txt", getActivityInstanc()
-				.getApplicationContext());
-		if (len <= 0) {
-			throw new IOException("empty file");
+	private Boolean isCasted() throws ReinstallException,
+			NoConnectionException {
+		List<String> sVotes = getFileFromServer("votes.txt", pCommitteeVKey,
+				pBBVKey, "#");
+		if (sVotes == null) {
+			throw new NoConnectionException("votes.txt file was not verified");
+		}
+		if (sVotes.contains(bv.getVoteString())) {
+			return true;
 		} else {
-			sVotes = handleFilesFromServer("votes.txt", len, "#");
-			/* look for the vote string in file */
-			if (sVotes.contains(bv.getVoteString())) {
-				return true;
-			} else {
-				return false;
-			}
+			return false;
 		}
 	}
 
 	private List<String> hendleFilesFromApplication(int fileHandler,
-			String delmetor) {
-		List<String> ListParm = null;
+			String delmetor) throws ReinstallException {
+		byte[] bRaw = readFileFromApplication(fileHandler);
+
+		if (bRaw.equals(null)) {
+			return null;
+		} else {
+			return parseStringFromfiles(bRaw, delmetor);
+		}
+	}
+
+	/* returns a null string if something went wrong */
+	private byte[] readFileFromApplication(int fileHandler)
+			throws ReinstallException {
 		InputStream is = null;
 		byte[] buffer = null;
 
@@ -248,28 +271,103 @@ public class Verifying extends Activity {
 			int size = is.available();
 			buffer = new byte[size];
 			is.read(buffer);
-			ListParm = parseStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
-
+			throw new ReinstallException("local bad file");
 		} finally {
 			try {
 				is.close();
 			} catch (IOException e) {
-				ListParm = null;
+
 			}
 		}
-		return ListParm;
+		return buffer;
 	}
 
-	private List<String> handleFilesFromServer(String fileName, int len,
-			String delmetor) {
-		List<String> ListParm = null;
+	/*
+	 * This file both gets the file, verifies it & return the list extracted
+	 * from it
+	 */
+	private List<String> getFileFromServer(String fileName, Point pFirstSigKey,
+			Point pSecondSigKey, String delimiter) throws ReinstallException,
+			NoConnectionException {
+		byte[] bRaw = downloadFileAndVerify(fileName, pFirstSigKey,
+				pSecondSigKey);
+		if (bRaw == null) {
+			throw new NoConnectionException("file " + fileName
+					+ " is not verified");
+		} else {
+			parseStringFromfiles(bRaw, delimiter);
+			return parseStringFromfiles(bRaw, delimiter);
+		}
+	}
+
+	/*
+	 * if the file does not exists or is not signed, then return a null string
+	 * we have 2 signature keys, since a file could be verified by 2 optional
+	 * signatures
+	 */
+	private byte[] downloadFileAndVerify(String fileName, Point pFirstSigKey,
+			Point pSecondSigKey) throws ReinstallException,
+			NoConnectionException {
+		int len = 0;
+		try {
+			len = Server.getFile(sServerUrl, fileName, getActivityInstanc()
+					.getApplicationContext());
+		} catch (IOException e) {
+			throw new NoConnectionException("server failed to get file: "
+					+ fileName);
+		}
+		if (0 >= len) {
+			throw new NoConnectionException(fileName
+					+ " does not exists or empty");
+		}
+		byte[] bFile = readFileFromServer(fileName, len);
+		String sigFileName = fileName.substring(0, fileName.indexOf('.'))
+				+ ".sig";
+		try {
+			len = Server.getFile(sServerUrl, sigFileName, getActivityInstanc()
+					.getApplicationContext());
+		} catch (IOException e) {
+			throw new NoConnectionException(sigFileName
+					+ " does not exists or empty");
+		}
+		if (0 >= len) {
+			throw new NoConnectionException(sigFileName
+					+ " does not exists or empty");
+		}
+
+		Point pSigString;
+		try {
+			pSigString = Utils.translateStringToPointBase64(new String(
+					readFileFromServer(sigFileName, len)));
+		} catch (IOException e) {
+			throw new NoConnectionException(
+					"could not parse file signature: " + e.getMessage());
+		}
+		String sFile = new String(bFile);
+		/*
+		 * if the file was verified by one of the 2 optional signatures then
+		 * it's 0K, otherwise, return null
+		 */
+		if (ECDSAVerifier.checkStringVerification(sFile, pSigString,
+				pFirstSigKey, this.ecParams.sDSACurveName,
+				this.ecParams.sDSAHashName)
+				|| ECDSAVerifier.checkStringVerification(sFile, pSigString,
+						pSecondSigKey, this.ecParams.sDSACurveName,
+						this.ecParams.sDSAHashName)) {
+			return bFile;
+		} else {
+			return null;
+		}
+	}
+
+	private byte[] readFileFromServer(String fileName, int len) {
 		FileInputStream fis = null;
+		byte[] buffer = null;
 		try {
 			fis = openFileInput(fileName);
-			byte[] buffer = new byte[len];
+			buffer = new byte[len];
 			fis.read(buffer, 0, len);
-			ListParm = parseStringFromfiles(buffer, delmetor);
 		} catch (IOException e) {
 
 		} finally {
@@ -278,10 +376,9 @@ public class Verifying extends Activity {
 					fis.close();
 				}
 			} catch (IOException e) {
-				ListParm = null;
 			}
 		}
-		return ListParm;
+		return buffer;
 	}
 
 	private List<String> parseStringFromfiles(byte[] buffer, String delmetor) {
