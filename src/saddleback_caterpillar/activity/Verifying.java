@@ -46,6 +46,7 @@ public class Verifying extends Activity {
 	private Boolean isCasted = false;
 	private String sCandidate = "";
 	private String sServerUrl = "";
+	private String sSchollID = "";
 	private Point pGovernmentVKey;
 	private Point pCommitteeVKey;
 	private Point pBBVKey;
@@ -66,7 +67,7 @@ public class Verifying extends Activity {
 				if (!isVerified) {
 					parmters.put("text", "Vote was NOT created correctly :(");
 				} else {
-					sRes = "Your vote was created correctly";
+					sRes = "Your vote was created correctly\n school ID = " + sSchollID;
 				}
 				if (0 == second_scan.compareTo("")) {
 					parmters.put("isAudit", "no");
@@ -86,7 +87,7 @@ public class Verifying extends Activity {
 					if (!parmters.containsKey("text")) {
 						parmters.put(
 								"text",
-								"Vote was created correctly\nThe candidate is: "
+								sRes + "\nThe candidate is: "
 										+ sCandidate + "\ncounters- "
 										+ bv.getCountersString());
 					}
@@ -204,11 +205,18 @@ public class Verifying extends Activity {
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
 		List<String> ballot2 = null;
+		if(ballot1.size() < 9){
+			throw new BadBallotException("ballot is too short, some parameters are missing!");
+		}
 		if (second_scan.compareTo("") != 0) {
 			ballot2 = Parser.parseString(second_scan, "@");
+			if(ballot2.size() < 2){
+				throw new BadBallotException("second ballot is currapted!");
+			}
 			biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
 			biAudit2 = new BigInteger(Base64.decode(ballot2.get(1)));
 		}
+		sSchollID = ballot1.get(2);
 		Pattern p = Pattern.compile("$", Pattern.LITERAL);
 		String[] tmp = p.split(ballot1.get(0));
 		Parser.parseString(ballot1.get(0), "$");
