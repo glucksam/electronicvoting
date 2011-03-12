@@ -15,7 +15,7 @@ android:textSize="20sp"
 android:typeface="serif"
 android:textStyle="bold"
 android:textColor="#ff000000"
-android:layout_x="72px"
+android:layout_x="44px"
 android:layout_y="60px"
 >
 </TextView>
