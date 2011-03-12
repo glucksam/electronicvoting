@@ -33,14 +33,8 @@ import crypt.Vote;
 public class Verifying extends Activity {
 
 	private ProgressBar mProgress;
-
-	/* TODO: remove when done debuging */
-	// private String first_scan;
-	// private String second_scan;
-
-	private String first_scan = "1111$336@2222$301@113@(hgFYk9v192wdah1qkCIA6KwmmlMnsMASCAFL14iKIrg=,jAwd+/4nth7wkoBQUAuT2xbf9LSU1FF0MT/L1sE7OZs=):(7QTT5KNsNc7dXeJ4pFzYnso8X99/q3dAzzH0pIiwnfg=,HrfJm/W/TcV3p7Z7qEaKJzUuxHRmQqqMyH7fLR9U9iQ=)@(AMxrkqu8pGWY2tOeH6nG7NJd2YzppHK0tA==,APspsWJk1PkPlSwhEX+NLZ1/bb/J4ge2tg==)@(CWpplNQDw2FQ8c/qZDrHnrkdzRB+qo2dMdSYLx6kchs=,eRViFxjjOKp6UGWQWby69r+bx62I8jHxVnx5ermKuIo=)@(AJmYn0p64t36qmLCSekBZqApV9cqVp+FxA==,YgbhMP5DbyCbgc9/ttZQkpf/L+MIY/wr)@(wqyzZwul53JkCsn57N5imLhcRSieXh8fAioNu/brqO0=,Dg9TxjF2JXEB9Jt0dlzgtrTz9PbwqM9BxhNkqMf9rY8=)@(DcQU9YE/bU7jbF8fidV47tSzeTFm6TSo,CFAIzl1Bcna4rWyjGKtxZt2hT6gZ8qgX)";
-	private String second_scan = "Vy/c2VFsBq5ZfOGKWkL+AJDXpfNig0VaCiZtqrNxKhw=@JiQR3fmWPTkwReAHTAoRDDY7C0wTTcl15XHTpK8msoU=";
-
+	private String first_scan;
+	private String second_scan;
 	private BallotVerifier bv = null;
 	private Boolean isVerified = false;
 	private Boolean isCasted = false;
@@ -121,10 +115,11 @@ public class Verifying extends Activity {
 		new Thread(new Runnable() {
 			public void run() {
 				Bundle bundle = getActivityInstanc().getIntent().getExtras();
-				/* TODO: un-comment when done testing */
-				// first_scan = bundle.getString("firstScanReasult");
-				// second_scan = bundle.getString("secondScanReasult");
-				
+				first_scan = bundle.getString("firstScanReasult");
+				second_scan = bundle.getString("secondScanReasult");
+				Log.d("WORKSHOP", "input: 1- " + first_scan);
+				Log.d("WORKSHOP", "input: 2- " + second_scan);
+
 				Security.addProvider(new local.bouncycastle.jce.provider.BouncyCastleProvider());
 				try {
 					Log.d("WORKSHOP", "starting try");
@@ -171,7 +166,7 @@ public class Verifying extends Activity {
 		ecParams = new ECParams(parametersFromFile.get(4),
 				parametersFromFile.get(3), parametersFromFile.get(2),
 				parametersFromFile.get(1));
-		
+
 		sigFromBB = getFileFromServer("signature.txt", pGovernmentVKey,
 				pBBVKey, "#");
 		if (null == sigFromBB || sigFromBB.size() < 3) {
@@ -269,8 +264,7 @@ public class Verifying extends Activity {
 		this.bv = i_bv;
 	}
 
-	private Boolean isCasted() throws ReinstallException,
-			NoConnectionException {
+	private Boolean isCasted() throws ReinstallException, NoConnectionException {
 		List<String> sVotes = getFileFromServer("votes.txt", pCommitteeVKey,
 				pBBVKey, "#");
 		if (sVotes == null) {
@@ -323,7 +317,7 @@ public class Verifying extends Activity {
 	 */
 	private List<String> getFileFromServer(String fileName, Point pFirstSigKey,
 			Point pSecondSigKey, String delimiter) throws ReinstallException,
-			NoConnectionException{
+			NoConnectionException {
 		byte[] bRaw = downloadFileAndVerify(fileName, pFirstSigKey,
 				pSecondSigKey);
 		if (bRaw == null) {
@@ -415,7 +409,7 @@ public class Verifying extends Activity {
 		return buffer;
 	}
 
-	private List<String> parseStringFromfiles(byte[] buffer, String delmetor){
+	private List<String> parseStringFromfiles(byte[] buffer, String delmetor) {
 		String text = new String(buffer);
 		List<String> ListParm = Parser.parseString(text, delmetor);
 		return ListParm;
