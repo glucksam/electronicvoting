@@ -73,7 +73,7 @@ public class ECDSAVerifier {
 	 * signature in the unlikely case that r = 0 or s = 0 The signature is (r,
 	 * s)
 	 */
-	public String sign(BigInteger message) {
+	public Point sign(BigInteger message) {
 		BigInteger r = BigInteger.ZERO;
 		BigInteger s = BigInteger.ZERO;
 		BigInteger N = this.ecParams.getN();
@@ -91,10 +91,10 @@ public class ECDSAVerifier {
 			s = (k.modInverse(N).multiply(message.add(privKey.multiply(r))))
 					.mod(N);
 		}
-		return Utils.translatePointToStringBase64(new Point(r,s));
+		return new Point(r,s);
 	}
 
-	public static String signString(String strToSign, BigInteger privKey,
+	public static Point signString(String strToSign, BigInteger privKey,
 			String curveName, String hashName) throws ReinstallException {
 		ECDSAVerifier verifier;
 		try {

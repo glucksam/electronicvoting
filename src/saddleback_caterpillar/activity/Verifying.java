@@ -67,7 +67,8 @@ public class Verifying extends Activity {
 				if (!isVerified) {
 					parmters.put("text", "Vote was NOT created correctly :(");
 				} else {
-					sRes = "Your vote was created correctly\n school ID = " + sSchollID;
+					sRes = "Your vote was created correctly\n school ID = "
+							+ sSchollID;
 				}
 				if (0 == second_scan.compareTo("")) {
 					parmters.put("isAudit", "no");
@@ -87,8 +88,8 @@ public class Verifying extends Activity {
 					if (!parmters.containsKey("text")) {
 						parmters.put(
 								"text",
-								sRes + "\nThe candidate is: "
-										+ sCandidate + "\ncounters- "
+								sRes + "\nThe candidate is: " + sCandidate
+										+ "\ncounters- "
 										+ bv.getCountersString());
 					}
 				}
@@ -123,6 +124,7 @@ public class Verifying extends Activity {
 				/* TODO: un-comment when done testing */
 				// first_scan = bundle.getString("firstScanReasult");
 				// second_scan = bundle.getString("secondScanReasult");
+				
 				Security.addProvider(new local.bouncycastle.jce.provider.BouncyCastleProvider());
 				try {
 					Log.d("WORKSHOP", "starting try");
@@ -158,9 +160,10 @@ public class Verifying extends Activity {
 		}
 		sServerUrl = parametersFromFile.get(0);
 		try {
-			pBBVKey = Utils.translateStringToPointHex(parametersFromFile.get(5));
-			pGovernmentVKey = Utils.translateStringToPointHex(parametersFromFile
-					.get(6));
+			pBBVKey = Utils
+					.translateStringToPointHex(parametersFromFile.get(5));
+			pGovernmentVKey = Utils
+					.translateStringToPointHex(parametersFromFile.get(6));
 		} catch (IOException e) {
 			throw new ReinstallException("could not figure signature: "
 					+ e.getMessage());
@@ -168,8 +171,9 @@ public class Verifying extends Activity {
 		ecParams = new ECParams(parametersFromFile.get(4),
 				parametersFromFile.get(3), parametersFromFile.get(2),
 				parametersFromFile.get(1));
-		sigFromBB = getFileFromServer("signature.txt", pGovernmentVKey, pBBVKey,
-				"#");
+		
+		sigFromBB = getFileFromServer("signature.txt", pGovernmentVKey,
+				pBBVKey, "#");
 		if (null == sigFromBB || sigFromBB.size() < 3) {
 			throw new NoConnectionException("signatures file is too short");
 		}
@@ -179,6 +183,7 @@ public class Verifying extends Activity {
 			throw new NoConnectionException(
 					"could figure our committee signature");
 		}
+		Log.d("WORKSHOP", "setting ballot");
 		setBallot(createBalloVerifier(parametersFromFile, sigFromBB));
 		Log.d("WORKSHOP", "done creating ballot");
 		isVerified = bv.verify();
@@ -201,34 +206,55 @@ public class Verifying extends Activity {
 	private BallotVerifier createBalloVerifier(List<String> dataBase,
 			List<String> sigFromBB) throws ReinstallException,
 			BadBallotException {
+		Log.d("WORKSHOP", "parsing first scan");
 		List<String> ballot1 = Parser.parseString(first_scan, "@");
 		BigInteger biAudit1 = null;
 		BigInteger biAudit2 = null;
 		List<String> ballot2 = null;
-		if(ballot1.size() < 9){
-			throw new BadBallotException("ballot is too short, some parameters are missing!");
+		if (ballot1.size() < 9) {
+			throw new BadBallotException(
+					"ballot is too short, some parameters are missing!");
 		}
 		if (second_scan.compareTo("") != 0) {
 			ballot2 = Parser.parseString(second_scan, "@");
-			if(ballot2.size() < 2){
+			if (ballot2.size() < 2) {
 				throw new BadBallotException("second ballot is currapted!");
 			}
-			biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
-			biAudit2 = new BigInteger(Base64.decode(ballot2.get(1)));
+			try {
+				biAudit1 = new BigInteger(Base64.decode(ballot2.get(0)));
+				biAudit2 = new BigInteger(Base64.decode(ballot2.get(1)));
+			} catch (Exception e) {
+				throw new BadBallotException("second ballot is currapted");
+			}
 		}
+		Log.d("WORKSHOP", "setting school ID");
 		sSchollID = ballot1.get(2);
 		Pattern p = Pattern.compile("$", Pattern.LITERAL);
 		String[] tmp = p.split(ballot1.get(0));
-		Parser.parseString(ballot1.get(0), "$");
-		int ID = Integer.valueOf(tmp[0]).intValue();
-		int iCount = Integer.valueOf(tmp[1]).intValue();
+		int ID;
+		int iCount;
+		try {
+			ID = Integer.valueOf(tmp[0]).intValue();
+			iCount = Integer.valueOf(tmp[1]).intValue();
+		} catch (Exception e) {
+			throw new BadBallotException(
+					"Could not get smart card ID or counter");
+		}
+		Log.d("WORKSHOP", "initializing first smart card");
 		SmartCard sc1 = new SmartCard(biAudit1, ballot1.get(5),
 				sigFromBB.get(1), ballot1.get(6), ID, iCount);
 		tmp = p.split(ballot1.get(1));
-		ID = Integer.valueOf(tmp[0]).intValue();
-		iCount = Integer.valueOf(tmp[1]).intValue();
+		try {
+			ID = Integer.valueOf(tmp[0]).intValue();
+			iCount = Integer.valueOf(tmp[1]).intValue();
+		} catch (Exception e) {
+			throw new BadBallotException(
+					"Could not get smart card ID or counter");
+		}
+		Log.d("WORKSHOP", "initializing second smart card");
 		SmartCard sc2 = new SmartCard(biAudit2, ballot1.get(7),
 				sigFromBB.get(2), ballot1.get(8), ID, iCount);
+		Log.d("WORKSHOP", "initializing vote");
 		Vote vote = new Vote(ballot1.get(3), ballot1.get(4));
 		BallotVerifier bv = null;
 		bv = new BallotVerifier(sc1, sc2, this.ecParams, vote);
@@ -297,7 +323,7 @@ public class Verifying extends Activity {
 	 */
 	private List<String> getFileFromServer(String fileName, Point pFirstSigKey,
 			Point pSecondSigKey, String delimiter) throws ReinstallException,
-			NoConnectionException {
+			NoConnectionException{
 		byte[] bRaw = downloadFileAndVerify(fileName, pFirstSigKey,
 				pSecondSigKey);
 		if (bRaw == null) {
@@ -349,8 +375,8 @@ public class Verifying extends Activity {
 			pSigString = Utils.translateStringToPointBase64(new String(
 					readFileFromServer(sigFileName, len)));
 		} catch (IOException e) {
-			throw new NoConnectionException(
-					"could not parse file signature: " + e.getMessage());
+			throw new NoConnectionException("could not parse file signature: "
+					+ e.getMessage());
 		}
 		String sFile = new String(bFile);
 		/*
@@ -389,7 +415,7 @@ public class Verifying extends Activity {
 		return buffer;
 	}
 
-	private List<String> parseStringFromfiles(byte[] buffer, String delmetor) {
+	private List<String> parseStringFromfiles(byte[] buffer, String delmetor){
 		String text = new String(buffer);
 		List<String> ListParm = Parser.parseString(text, delmetor);
 		return ListParm;
