@@ -6,6 +6,7 @@ import local.bouncycastle.math.ec.ECPoint;
 import Exceptions.BadBallotException;
 import Exceptions.NoConnectionException;
 import Exceptions.ReinstallException;
+import android.util.Log;
 import crypt.ECElGamal;
 import crypt.ECParams;
 import crypt.SmartCard;
@@ -85,17 +86,21 @@ public class BallotVerifier {
 			ReinstallException, NoConnectionException {
 		String voteString = vote.sVote + "~" + sc1.scID + "$" + sc1.iCounter
 				+ "~" + sc2.scID + "$" + sc2.iCounter;
-		Boolean isVerified = false;
-		if (sc2.verifySignature(ecParam) && sc1.verifySignature(ecParam)
-				&& sc2.verifySignature(voteString, vote.sSignature, ecParam)) {
-			isVerified = true;
-		}
-		return isVerified;
+		
+		return (sc2.verifySignature(ecParam) && sc1.verifySignature(ecParam)
+				&& sc2.verifySignature(voteString, vote.sSignature, ecParam));
 	}
 
 	public Boolean verify() throws BadBallotException, ReinstallException,
 			NoConnectionException {
-		return (verifyECElGamal() && verifySignatures());
+		if(!verifyECElGamal()){
+			Log.d("WORKSHOP", "could not verify elgamal");
+			return false;
+		}else if(!verifySignatures()){
+			Log.d("WORKSHOP", "could not verify singnatures");
+			return false;
+		}
+		return true;
 	}
 
 	public String toString() {
