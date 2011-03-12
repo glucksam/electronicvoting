@@ -39,6 +39,7 @@ public class ElectronicVoting extends Activity {
 				//IntentIntegrator.initiateScan(getActivityInstanc());
 				if(I_sFromScan == null){
 					HelpfulMathods.Error(getActivityInstanc(), "BAD_BALLOT");
+					return;
 				}
 				parmters.put("secondScanReasult", I_sFromScan);
 				HelpfulMathods.moveActivtyWitheParam(Verifying.class, getActivityInstanc(), parmters);
