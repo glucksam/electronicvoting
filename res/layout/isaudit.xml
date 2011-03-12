@@ -46,8 +46,8 @@ android:id="@+id/widget35"
 android:layout_width="186px"
 android:layout_height="173px"
 android:src="@drawable/votinf_box"
-android:layout_x="132px"
-android:layout_y="258px"
+android:layout_x="141px"
+android:layout_y="312px"
 >
 </ImageView>
 </AbsoluteLayout>
