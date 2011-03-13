@@ -6,6 +6,8 @@ import tools.HelpfulMathods;
 import tools.IntentIntegrator;
 import tools.IntentResult;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,7 +18,7 @@ import android.widget.Button;
 public class ElectronicVoting extends Activity {
 	private String I_sFromScan = null;
 	private HashMap<String, String> parameters;
-	private boolean isScannerNotInstalled = false; 
+	private boolean isScannerNotInstalled = false;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -24,9 +26,17 @@ public class ElectronicVoting extends Activity {
 		super.onCreate(savedInstanceState);
 		isScannerNotInstalled = false;
 		parameters = new HashMap<String, String>();
-		 if(null != IntentIntegrator.initiateScan(this)){/*installing scanner*/
+		AlertDialog downloadDialog = IntentIntegrator.initiateScan(this); 
+		 if(null != downloadDialog){/*installing scanner*/
 			 Log.d("WORKSHOP", "scanner not installed!!!");
 			 isScannerNotInstalled = true;
+			 downloadDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						finish();
+						
+					}
+				});
 		 }
 	}
 
@@ -59,12 +69,12 @@ public class ElectronicVoting extends Activity {
 	protected void onStop() {
 		super.onStop();
 		Log.d("WORKSHOP", "onStop");
-		if(isScannerNotInstalled){
+		if (isScannerNotInstalled) {
 			Log.d("WORKSHOP", "committing suicide");
 			this.finish();
 		}
 	}
-	
+
 	public void presentingIaAuditScreen() {
 		setContentView(R.layout.isaudit);
 		Button yesButton = (Button) findViewById(R.id.Yes);
