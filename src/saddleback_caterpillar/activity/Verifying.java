@@ -61,8 +61,7 @@ public class Verifying extends Activity {
 				if (!isVerified) {
 					parmters.put("text", "Vote was NOT created correctly :(");
 				} else {
-					sRes = "Your vote was created correctly\n school ID = "
-							+ sSchollID;
+					sRes = "Your vote was created correctly";
 				}
 				if (0 == second_scan.compareTo("")) {
 					parmters.put("isAudit", "no");
@@ -73,7 +72,7 @@ public class Verifying extends Activity {
 						} else {
 							sRes += ", but not casted properly";
 						}
-						sRes += "\ncounters- " + bv.getCountersString();
+						sRes += "\nschool ID = " + sSchollID + "\n counters- " + bv.getCountersString();
 						parmters.put("text", sRes);
 					}
 				} else {
@@ -82,7 +81,7 @@ public class Verifying extends Activity {
 					if (!parmters.containsKey("text")) {
 						parmters.put(
 								"text",
-								sRes + "\nThe candidate is: " + sCandidate
+								sRes + "\nschool ID = " + sSchollID + "\nThe candidate is: " + sCandidate
 										+ "\ncounters- "
 										+ bv.getCountersString());
 					}
