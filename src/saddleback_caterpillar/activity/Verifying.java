@@ -59,31 +59,35 @@ public class Verifying extends Activity {
 			switch (msg.what) {
 			case 0:
 				if (!isVerified) {
-					parmters.put("text", "Vote was NOT created correctly :(");
+					sRes = "Vote was NOT created correctly :(";
 				} else {
 					sRes = "Your vote was created correctly";
 				}
 				if (0 == second_scan.compareTo("")) {
 					parmters.put("isAudit", "no");
 					parmters.put("titles", "Casting");
-					if (!parmters.containsKey("text")) {
-						if (isCasted) {
-							sRes += " and casted properly";
-						} else {
-							sRes += ", but not casted properly";
-						}
-						sRes += "\nschool ID = " + sSchollID + "\n counters- " + bv.getCountersString();
-						parmters.put("text", sRes);
+					if (isCasted) {
+						sRes += " and casted properly";
+					} else {
+						sRes += ", but not casted properly";
 					}
+					sRes += "\nschool ID = " + sSchollID + "\n counters- "
+							+ bv.getCountersString();
+					parmters.put("text", sRes);
 				} else {
 					parmters.put("isAudit", "yes");
 					parmters.put("titles", "Audit result");
-					if (!parmters.containsKey("text")) {
+					if (sCandidate == "") /* this means we could not get candidate */{
 						parmters.put(
 								"text",
-								sRes + "\nschool ID = " + sSchollID + "\nThe candidate is: " + sCandidate
+								sRes + "\nschool ID = " + sSchollID
+										+ "\nAudit ballot did not match the vote ballot"
 										+ "\ncounters- "
 										+ bv.getCountersString());
+					}else{
+					parmters.put("text", sRes + "\nschool ID = " + sSchollID
+							+ "\nThe candidate is: " + sCandidate
+							+ "\ncounters- " + bv.getCountersString());
 					}
 				}
 				mProgress.setVisibility(8);
@@ -183,9 +187,12 @@ public class Verifying extends Activity {
 		isVerified = bv.verify();
 		Log.d("WORKSHOP", "done verifying ballot");
 		if (0 < bv.getCandidate()) {
+			try{
 			sCandidate = parametersFromFile.get(5 + bv.getCandidate());
-		}
-		if (bv.getCandidate() < 0) {
+			}catch(Exception e){
+				throw new BadBallotException("list of candidates was too short for this ballot");
+			}
+		} else if (bv.getCandidate() < 0) {
 			isCasted = isCasted();
 		}
 	}
